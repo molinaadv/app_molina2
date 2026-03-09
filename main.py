@@ -15,11 +15,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# URL de produção do n8n
 N8N_WEBHOOK = "https://molinaadv.app.n8n.cloud/webhook/legalone-consulta"
+N8N_WEBHOOK_PROCESSOS = "https://molinaadv.app.n8n.cloud/webhook/legalone-processos-cliente"
 
-# Base simples de usuários para teste
-# Depois podemos trocar por banco de dados
 usuarios = {
     "12345678900": {
         "nome": "Cliente Teste",
@@ -27,7 +25,6 @@ usuarios = {
     }
 }
 
-# Sessões simples em memória
 sessoes = {}
 
 
@@ -66,7 +63,8 @@ def login(dados: LoginRequest):
     return {
         "sucesso": True,
         "token": token,
-        "nome": usuario["nome"]
+        "nome": usuario["nome"],
+        "cpf": dados.cpf
     }
 
 
@@ -77,6 +75,40 @@ def obter_sessao(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Sessão inválida")
 
     return sessao
+
+
+@app.post("/processos-cliente")
+def processos_cliente(token: str):
+    sessao = obter_sessao(token)
+
+    cpf = sessao["cpf"]
+    nome = sessao["nome"]
+
+    payload = {
+        "cpf": cpf
+    }
+
+    try:
+        resposta = requests.post(
+            N8N_WEBHOOK_PROCESSOS,
+            json=payload,
+            timeout=60
+        )
+        resposta.raise_for_status()
+        retorno_n8n = resposta.json()
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao consultar lista de processos: {str(e)}"
+        )
+
+    return {
+        "sucesso": True,
+        "cliente": nome,
+        "cpf": cpf,
+        "processos": retorno_n8n.get("processos", [])
+    }
 
 
 @app.post("/consulta")
