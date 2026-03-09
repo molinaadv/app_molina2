@@ -2,10 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Criar aplicação
 app = FastAPI()
 
-# Configuração CORS (permite que o app do Lovable acesse a API)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,23 +12,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Modelo da pergunta recebida
 class Pergunta(BaseModel):
     cpf: str
     pergunta: str
 
 
-# Rota inicial
 @app.get("/")
 def inicio():
     return {"mensagem": "API Molina Advogados funcionando"}
 
 
-# Endpoint principal para responder perguntas
 @app.post("/pergunta")
 def responder(pergunta: Pergunta):
-
-    resposta = {
+    return {
         "cliente": {
             "nome": "João da Silva",
             "cpf": pergunta.cpf
@@ -54,5 +48,3 @@ def responder(pergunta: Pergunta):
             "Seu boleto vence em breve."
         ]
     }
-
-    return resposta
