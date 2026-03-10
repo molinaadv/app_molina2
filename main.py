@@ -22,6 +22,10 @@ usuarios = {
     "12345678900": {
         "nome": "Cliente Teste",
         "senha": "123456"
+    },
+    "73253308200": {
+        "nome": "Cliente Legal One",
+        "senha": "123456"
     }
 }
 
@@ -45,18 +49,21 @@ def home():
 
 @app.post("/login")
 def login(dados: LoginRequest):
-    usuario = usuarios.get(dados.cpf)
+    cpf = dados.cpf.replace(".", "").replace("-", "").strip()
+    senha = dados.senha.strip()
+
+    usuario = usuarios.get(cpf)
 
     if not usuario:
         raise HTTPException(status_code=401, detail="CPF não encontrado")
 
-    if usuario["senha"] != dados.senha:
+    if usuario["senha"] != senha:
         raise HTTPException(status_code=401, detail="Senha inválida")
 
     token = secrets.token_hex(16)
 
     sessoes[token] = {
-        "cpf": dados.cpf,
+        "cpf": cpf,
         "nome": usuario["nome"]
     }
 
@@ -64,7 +71,7 @@ def login(dados: LoginRequest):
         "sucesso": True,
         "token": token,
         "nome": usuario["nome"],
-        "cpf": dados.cpf
+        "cpf": cpf
     }
 
 
@@ -132,7 +139,6 @@ def consulta(token: str, dados: ConsultaRequest):
             json=payload,
             timeout=60
         )
-
         resposta.raise_for_status()
         retorno_n8n = resposta.json()
 
