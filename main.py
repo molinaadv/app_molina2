@@ -139,7 +139,6 @@ def consulta(token: str, dados: ConsultaRequest):
             json=payload,
             timeout=60
         )
-
         resposta.raise_for_status()
         retorno_n8n = resposta.json()
 
